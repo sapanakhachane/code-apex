@@ -1,0 +1,16 @@
+# Node.js
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+*.local
+
+# Python
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+.venv/
+venv/
+
+# System
+.DS_Store
+Thumbs.db
