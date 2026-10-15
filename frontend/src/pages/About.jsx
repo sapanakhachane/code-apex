@@ -76,7 +76,7 @@ export const About = () => {
               <li>• React.js & Vite 5</li>
               <li>• Tailwind CSS & Dark Navy Theme</li>
               <li>• Framer Motion Transitions</li>
-              <li>• Leaflet & CartoDB Dark Tiles</li>
+              <li>• Leaflet & OpenStreetMap (OSM) Tiles</li>
               <li>• Recharts Analytics Dashboards</li>
               <li>• Lucide React Iconography</li>
             </ul>
