@@ -17,7 +17,18 @@ import {
 const COLORS = ['#EF4444', '#F97316', '#EAB308', '#10B981', '#06B6D4', '#8B5CF6'];
 
 export const AuthorityDashboard = () => {
-  const { emergencies, rescueTeams, stats, updateStatus, overridePriority, assignRescueTeam, refreshData } = useEmergency();
+  const {
+    emergencies,
+    rescueTeams,
+    stats,
+    updateStatus,
+    overridePriority,
+    assignRescueTeam,
+    refreshData,
+    weatherData,
+    openWeatherModal,
+    weatherLocationName
+  } = useEmergency();
   const { currentUser } = useAuth();
 
   // Search & Filter
@@ -181,6 +192,50 @@ export const AuthorityDashboard = () => {
           <span className="text-2xl font-black font-mono text-emerald-400 mt-1 block">
             {stats?.resolvedIncidents ?? 1}
           </span>
+        </div>
+      </div>
+
+      {/* Tactical Disaster Meteorological Intelligence Bar (Open-Meteo) */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-navy-950 to-slate-900 border border-cyan-500/30 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl text-cyan-400">
+            {weatherData?.interpretation?.icon || '🌤️'}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-bold text-white tracking-wide">
+                Tactical Dispatch Weather Intelligence
+              </h4>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
+                OPEN-METEO SYNC
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Sector: <strong className="text-slate-200">{weatherLocationName}</strong> • {weatherData?.current?.temperature_2m !== undefined ? `${Math.round(weatherData.current.temperature_2m)}°C` : '31°C'} ({weatherData?.interpretation?.description || 'Clear'}) • Wind: {weatherData?.current?.wind_speed_10m || 8} km/h • Humidity: {weatherData?.current?.relative_humidity_2m || 60}%
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+          <div className="text-xs font-mono">
+            <span className="text-slate-400 text-[11px] block">Operational Threat:</span>
+            <span className={`font-bold text-xs ${
+              weatherData?.disasterAssessment?.threatLevel === 'Critical'
+                ? 'text-red-400'
+                : weatherData?.disasterAssessment?.threatLevel === 'High'
+                ? 'text-amber-400'
+                : 'text-emerald-400'
+            }`}>
+              {weatherData?.disasterAssessment?.threatLevel || 'LOW'} ({weatherData?.disasterAssessment?.threatScore || 15}/100)
+            </span>
+          </div>
+
+          <button
+            onClick={() => openWeatherModal()}
+            className="px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 text-cyan-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
+          >
+            <span>🌦️ Open Weather Center</span>
+          </button>
         </div>
       </div>
 

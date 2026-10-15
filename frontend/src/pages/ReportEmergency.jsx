@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEmergency } from '../context/EmergencyContext';
 import { useAuth } from '../context/AuthContext';
 import { AISeverityCard } from '../components/AISeverityCard';
+import { fetchWeather } from '../services/openMeteoService';
 import {
   Flame, MapPin, Phone, User, AlertTriangle, Sparkles,
   Camera, CheckCircle, Navigation, ShieldAlert, ArrowRight,
-  Info, RefreshCw, PhoneCall
+  Info, RefreshCw, PhoneCall, CloudSun, Wind, Droplets
 } from 'lucide-react';
 
 const EMERGENCY_TYPES = [
@@ -46,6 +47,27 @@ export const ReportEmergency = () => {
   const [previewAnalysis, setPreviewAnalysis] = useState(null);
   const [isPreviewingAI, setIsPreviewingAI] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [siteWeather, setSiteWeather] = useState(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
+
+  // Auto-fetch Open-Meteo weather when latitude or longitude changes
+  useEffect(() => {
+    let isMounted = true;
+    async function loadWeather() {
+      if (!latitude || !longitude) return;
+      setLoadingWeather(true);
+      try {
+        const data = await fetchWeather(latitude, longitude);
+        if (isMounted) setSiteWeather(data);
+      } catch (e) {
+        console.warn("Could not fetch site weather:", e);
+      } finally {
+        if (isMounted) setLoadingWeather(false);
+      }
+    }
+    loadWeather();
+    return () => { isMounted = false; };
+  }, [latitude, longitude]);
 
   // Geolocation detector
   const handleDetectLocation = () => {
@@ -129,7 +151,13 @@ export const ReportEmergency = () => {
         address,
         landmark,
         imageUrl: imageUrl || null,
-        userId: currentUser?.uid || 'anon_citizen'
+        userId: currentUser?.uid || 'anon_citizen',
+        weatherContext: siteWeather?.current ? {
+          temperature: siteWeather.current.temperature_2m,
+          condition: siteWeather.interpretation?.description,
+          windSpeed: siteWeather.current.wind_speed_10m,
+          threatLevel: siteWeather.disasterAssessment?.threatLevel
+        } : null
       };
 
       const result = await submitEmergency(payload);
@@ -295,6 +323,54 @@ export const ReportEmergency = () => {
               <div>Latitude: <span className="text-cyan-400">{latitude}</span></div>
               <div>Longitude: <span className="text-cyan-400">{longitude}</span></div>
             </div>
+
+            {/* Live Meteorological Context from Open-Meteo */}
+            {siteWeather && (
+              <div className="mt-2 p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{siteWeather.interpretation?.icon || '🌤️'}</span>
+                    <div>
+                      <span className="font-bold text-white">
+                        {siteWeather.current?.temperature_2m !== undefined ? `${Math.round(siteWeather.current.temperature_2m)}°C` : '--'} ({siteWeather.interpretation?.description})
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono block">
+                        Open-Meteo Micro-Climate Telemetry
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    siteWeather.disasterAssessment?.threatLevel === 'Critical'
+                      ? 'bg-red-950 text-red-400 border-red-800'
+                      : siteWeather.disasterAssessment?.threatLevel === 'High'
+                      ? 'bg-amber-950 text-amber-400 border-amber-800'
+                      : 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                  }`}>
+                    Weather Threat: {siteWeather.disasterAssessment?.threatLevel || 'LOW'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-[11px] font-mono text-slate-300 pt-1 border-t border-slate-800">
+                  <div>💨 Wind: <strong className="text-white">{siteWeather.current?.wind_speed_10m || 8} km/h</strong></div>
+                  <div>💧 Humidity: <strong className="text-white">{siteWeather.current?.relative_humidity_2m || 60}%</strong></div>
+                  <div>🌧️ Rain: <strong className="text-white">{siteWeather.current?.precipitation || 0} mm/h</strong></div>
+                </div>
+
+                {/* Weather Alert if applicable */}
+                {siteWeather.current?.wind_speed_10m >= 18 && emergencyType === 'Fire Emergency' && (
+                  <div className="flex items-center gap-1.5 text-amber-400 text-[11px] pt-1">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Elevated wind speed ({siteWeather.current?.wind_speed_10m} km/h) flagged to accelerate fire front.</span>
+                  </div>
+                )}
+                {siteWeather.current?.precipitation >= 2 && emergencyType === 'Flood' && (
+                  <div className="flex items-center gap-1.5 text-blue-400 text-[11px] pt-1">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Active rainfall detected. Urban waterlogging rate amplified.</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Section 3: Casualty & Description Details */}

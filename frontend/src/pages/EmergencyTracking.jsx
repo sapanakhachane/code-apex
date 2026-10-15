@@ -20,7 +20,7 @@ const STATUS_STAGES = [
 ];
 
 export const EmergencyTracking = () => {
-  const { emergencies, refreshData } = useEmergency();
+  const { emergencies, refreshData, openWeatherModal, weatherData } = useEmergency();
   const [searchParams] = useSearchParams();
   const queryId = searchParams.get('id');
 
@@ -143,6 +143,33 @@ export const EmergencyTracking = () => {
                   <span>Latest update: {new Date(activeIncident.updatedAt).toLocaleTimeString()}</span>
                 </button>
               </div>
+            </div>
+
+            {/* Live Open-Meteo Meteorological Incident Briefing */}
+            <div className="p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{weatherData?.interpretation?.icon || '🌤️'}</span>
+                <div>
+                  <span className="font-bold text-white block">
+                    Micro-Climate at Incident Site: {weatherData?.current?.temperature_2m !== undefined ? `${Math.round(weatherData.current.temperature_2m)}°C` : '31°C'} ({weatherData?.interpretation?.description || 'Mainly Clear'})
+                  </span>
+                  <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono mt-0.5">
+                    <span>💨 Wind: {weatherData?.current?.wind_speed_10m || 8} km/h</span>
+                    <span>•</span>
+                    <span>💧 Humidity: {weatherData?.current?.relative_humidity_2m || 60}%</span>
+                    <span>•</span>
+                    <span>🌧️ Precip: {weatherData?.current?.precipitation || 0} mm</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openWeatherModal(activeIncident.location?.latitude, activeIncident.location?.longitude, activeIncident.location?.address)}
+                className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+              >
+                <span>🌦️ Weather Radar</span>
+              </button>
             </div>
 
             {/* Visual 7-Step Progress Stepper */}

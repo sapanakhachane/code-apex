@@ -19,7 +19,13 @@ const RESCUE_STAGES = [
 ];
 
 export const RescueDashboard = () => {
-  const { emergencies, rescueTeams, updateRescueMissionStatus } = useEmergency();
+  const {
+    emergencies,
+    rescueTeams,
+    updateRescueMissionStatus,
+    weatherData,
+    openWeatherModal
+  } = useEmergency();
   const { currentUser } = useAuth();
 
   // Pick logged in team or default demo team
@@ -138,6 +144,52 @@ export const RescueDashboard = () => {
                   <span>Casualties: <strong className="text-red-400">{activeMission.injuredPeople} Injured</strong></span>
                   <span>Affected: <strong className="text-white">{activeMission.affectedPeople} People</strong></span>
                   <span>Caller: <strong className="text-white">{activeMission.callerName} ({activeMission.contactNumber})</strong></span>
+                </div>
+              </div>
+
+              {/* On-Scene Tactical Weather Intelligence (Open-Meteo) */}
+              <div className="p-4 rounded-xl bg-slate-950/80 border border-amber-500/30 text-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{weatherData?.interpretation?.icon || '🌤️'}</span>
+                    <div>
+                      <strong className="text-white block font-sans">
+                        On-Scene Weather Telemetry ({weatherData?.interpretation?.description || 'Clear'})
+                      </strong>
+                      <span className="text-[10px] text-slate-400 font-mono block">
+                        Open-Meteo Live API • Ground Wind & Precipitation Feed
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openWeatherModal(activeMission.location?.latitude, activeMission.location?.longitude, activeMission.location?.address)}
+                    className="px-3 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold text-xs transition-colors flex items-center gap-1"
+                  >
+                    <span>🌦️ Full Radar</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono text-slate-300 pt-1 border-t border-slate-800">
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">Temperature:</span>
+                    <strong className="text-white text-xs">{weatherData?.current?.temperature_2m !== undefined ? `${Math.round(weatherData.current.temperature_2m)}°C` : '31°C'}</strong>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">Ground Wind:</span>
+                    <strong className="text-cyan-400 text-xs">{weatherData?.current?.wind_speed_10m || 8} km/h</strong>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">Precipitation:</span>
+                    <strong className="text-blue-400 text-xs">{weatherData?.current?.precipitation || 0} mm/h</strong>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">Drone Flight:</span>
+                    <strong className={`text-xs ${weatherData?.disasterAssessment?.aviationViability === 'Grounded' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {weatherData?.disasterAssessment?.aviationViability || 'Optimal'}
+                    </strong>
+                  </div>
                 </div>
               </div>
 

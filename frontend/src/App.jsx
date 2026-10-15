@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { NotificationDrawer } from './components/NotificationDrawer';
 import { FloatingChatbotWidget } from './components/FloatingChatbotWidget';
+import { DisasterWeatherModal } from './components/DisasterWeatherModal';
 import { useEmergency } from './context/EmergencyContext';
 
 // Pages
@@ -78,6 +79,9 @@ export function App() {
 
       {/* Floating Chatbot Widget on bottom right */}
       <FloatingChatbotWidget />
+
+      {/* Global Open-Meteo Disaster Weather Intelligence Modal */}
+      <DisasterWeatherModal />
 
       {/* Notification Drawer */}
       <NotificationDrawer

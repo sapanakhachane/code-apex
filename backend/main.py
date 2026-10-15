@@ -414,3 +414,24 @@ def reset_demo_database():
     """Reset the database to rich pre-configured international hackathon sample dataset."""
     db.init_demo_dataset()
     return {"status": "success", "message": "Demo incidents, teams, and hospitals re-initialized."}
+
+@app.get("/api/weather")
+def get_weather(
+    lat: float = Query(19.0760, description="Latitude"),
+    lon: float = Query(72.8777, description="Longitude")
+):
+    """Fetch real-time weather from Open-Meteo API for emergency micro-climate awareness."""
+    import urllib.request
+    try:
+        url = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m"
+            "&hourly=temperature_2m,precipitation_probability,weather_code"
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto"
+        )
+        req = urllib.request.Request(url, headers={'User-Agent': 'CrisisMeshAI/1.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return json.loads(response.read().decode('utf-8'))
+    except Exception as e:
+        logger.warning(f"Backend Open-Meteo fetch failed: {e}")
+        return {"error": str(e), "latitude": lat, "longitude": lon}

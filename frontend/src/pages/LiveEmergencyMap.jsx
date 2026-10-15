@@ -3,13 +3,23 @@ import { useEmergency } from '../context/EmergencyContext';
 import { InteractiveMap } from '../components/InteractiveMap';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { WeatherBadge } from '../components/WeatherBadge';
 import {
   Filter, Search, RefreshCw, MapPin, Hospital, Layers,
-  ShieldAlert, ChevronRight, Phone, Eye, ExternalLink
+  ShieldAlert, ChevronRight, Phone, Eye, ExternalLink,
+  CloudSun, Wind, Droplets, AlertTriangle, Compass
 } from 'lucide-react';
 
 export const LiveEmergencyMap = () => {
-  const { emergencies, hospitals, refreshData } = useEmergency();
+  const {
+    emergencies,
+    hospitals,
+    refreshData,
+    weatherData,
+    weatherLocationName,
+    openWeatherModal,
+    refreshWeather
+  } = useEmergency();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -81,6 +91,8 @@ export const LiveEmergencyMap = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <WeatherBadge className="hidden sm:flex" />
+
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -137,6 +149,50 @@ export const LiveEmergencyMap = () => {
           >
             {statuses.map(s => <option key={s} value={s}>{s === 'ALL' ? 'All Statuses' : s}</option>)}
           </select>
+        </div>
+      </div>
+
+      {/* Open-Meteo Meteorological Intelligence Radar Ribbon */}
+      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-navy-950 to-slate-900/90 border border-cyan-500/30 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-3 text-xs shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-lg">
+            {weatherData?.interpretation?.icon || '🌤️'}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-white">
+                {weatherLocationName}
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
+                LIVE METEOROLOGY
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {weatherData?.current?.temperature_2m !== undefined ? `${Math.round(weatherData.current.temperature_2m)}°C` : '31°C'} • {weatherData?.interpretation?.description || 'Mainly Clear'} • Wind: {weatherData?.current?.wind_speed_10m || 8} km/h • Precip: {weatherData?.current?.precipitation || 0} mm/h
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+          <div className="text-[11px] font-mono text-slate-300 flex items-center gap-2">
+            <span className="text-slate-400">Disaster Threat:</span>
+            <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${
+              weatherData?.disasterAssessment?.threatLevel === 'Critical'
+                ? 'bg-red-950 text-red-400 border-red-800'
+                : weatherData?.disasterAssessment?.threatLevel === 'High'
+                ? 'bg-amber-950 text-amber-400 border-amber-800'
+                : 'bg-emerald-950 text-emerald-400 border-emerald-800'
+            }`}>
+              {weatherData?.disasterAssessment?.threatLevel || 'LOW'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => openWeatherModal()}
+            className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold text-xs transition-all flex items-center gap-1.5"
+          >
+            <span>🌦️ Weather Center</span>
+          </button>
         </div>
       </div>
 
@@ -201,6 +257,21 @@ export const LiveEmergencyMap = () => {
                         >
                           Track Full Flow
                         </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openWeatherModal(
+                              inc.location?.latitude,
+                              inc.location?.longitude,
+                              `${inc.emergencyType} – ${inc.location?.address?.split(',')[0] || 'Incident Site'}`
+                            );
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-cyan-500/50 text-cyan-400 text-xs font-semibold flex items-center gap-1"
+                          title="View live Open-Meteo micro-climate for this incident location"
+                        >
+                          <span>🌦️ Weather</span>
+                        </button>
                       </div>
                     )}
                   </div>

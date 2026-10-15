@@ -6,11 +6,11 @@ import { PriorityBadge } from '../components/PriorityBadge';
 import {
   ShieldAlert, Radio, Activity, Navigation, HeartHandshake,
   Bot, Hospital, Bell, ArrowRight, Zap, CheckCircle2,
-  Users, AlertTriangle, ShieldCheck, Flame, Compass, Sparkles
+  Users, AlertTriangle, ShieldCheck, Flame, Compass, Sparkles, CloudSun
 } from 'lucide-react';
 
 export const Home = () => {
-  const { emergencies, stats, isLoading } = useEmergency();
+  const { emergencies, stats, isLoading, openWeatherModal } = useEmergency();
   const { t } = useLanguage();
 
   const recentIncidents = emergencies.slice(0, 3);
@@ -45,6 +45,16 @@ export const Home = () => {
     },
     {
       id: 4,
+      title: "Open-Meteo Weather Radar",
+      desc: "Live meteorological telemetry calculating wildfire wind spread, flash flood risk, and rescue drone viability.",
+      icon: <CloudSun className="w-6 h-6 text-cyan-400" />,
+      color: "border-cyan-500/30 hover:border-cyan-500/70",
+      link: "/emergency-map",
+      onClick: () => openWeatherModal(),
+      btnText: "Launch Weather Radar"
+    },
+    {
+      id: 5,
       title: "Emergency AI Chatbot",
       desc: "24/7 multilingual assistant for first aid guidance, CPR cadence, evacuation safety, and distress protocols.",
       icon: <Bot className="w-6 h-6 text-purple-400" />,
@@ -53,7 +63,7 @@ export const Home = () => {
       btnText: "Chat with Assistant"
     },
     {
-      id: 5,
+      id: 6,
       title: "Rescue Team Assignment",
       desc: "Tactical dispatch routing matching Fire, ALS Trauma, and NDRF disaster teams by proximity and capability.",
       icon: <Users className="w-6 h-6 text-amber-400" />,
@@ -62,7 +72,7 @@ export const Home = () => {
       btnText: "Rescue Operations"
     },
     {
-      id: 6,
+      id: 7,
       title: "Nearby Hospital Recommendation",
       desc: "Live trauma center discovery with real-time distance calculations, trauma ratings, and direct routing.",
       icon: <Hospital className="w-6 h-6 text-emerald-400" />,
@@ -71,7 +81,7 @@ export const Home = () => {
       btnText: "Locate Hospitals"
     },
     {
-      id: 7,
+      id: 8,
       title: "Authority Dashboard",
       desc: "Comprehensive command cockpit with priority override, incident history logs, and Recharts analytics.",
       icon: <Activity className="w-6 h-6 text-rose-400" />,
@@ -80,7 +90,7 @@ export const Home = () => {
       btnText: "Authority Portal"
     },
     {
-      id: 8,
+      id: 9,
       title: "Live Status Notifications",
       desc: "WebSocket-powered instant dispatcher updates tracking all 7 incident stages from report to full resolution.",
       icon: <Bell className="w-6 h-6 text-sky-400" />,
@@ -298,6 +308,12 @@ export const Home = () => {
               <div className="mt-6 pt-4 border-t border-slate-800/80">
                 <Link
                   to={feat.link}
+                  onClick={(e) => {
+                    if (feat.onClick) {
+                      e.preventDefault();
+                      feat.onClick();
+                    }
+                  }}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 group-hover:underline"
                 >
                   <span>{feat.btnText}</span>

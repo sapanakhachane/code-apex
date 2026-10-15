@@ -7,6 +7,7 @@ import {
   ShieldAlert, Radio, Bell, Menu, X, Globe, User, LogOut,
   ChevronDown, Activity, Sparkles, MapPin, Truck
 } from 'lucide-react';
+import { WeatherBadge } from './WeatherBadge';
 
 export const Navbar = ({ onToggleNotifications }) => {
   const { currentUser, loginWithRole, logout } = useAuth();
@@ -51,6 +52,9 @@ export const Navbar = ({ onToggleNotifications }) => {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          {/* Live Open-Meteo Weather Chip */}
+          <WeatherBadge compact className="hidden sm:inline-flex" />
+
           <div className="flex items-center gap-1.5 text-xs font-mono">
             <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
             <span className="text-slate-400">{wsConnected ? 'LIVE DISPATCH SYNC' : 'CONNECTING...'}</span>
@@ -134,8 +138,11 @@ export const Navbar = ({ onToggleNotifications }) => {
           })}
         </nav>
 
-        {/* Action Controls: Notification Bell + Role Switcher */}
+        {/* Action Controls: Weather Center + Notification Bell + Role Switcher */}
         <div className="flex items-center gap-3">
+          {/* Weather Intelligence Button */}
+          <WeatherBadge className="hidden lg:flex" />
+
           {/* Notification Bell */}
           <button
             onClick={onToggleNotifications}
@@ -245,6 +252,9 @@ export const Navbar = ({ onToggleNotifications }) => {
       {/* Mobile Dropdown Nav */}
       {mobileMenuOpen && (
         <div className="xl:hidden bg-navy-950/95 border-b border-slate-800 px-4 py-4 space-y-2 backdrop-blur-xl">
+          <div className="pb-2 mb-2 border-b border-slate-800">
+            <WeatherBadge className="w-full justify-between" />
+          </div>
           {navLinks.map((link) => (
             <Link
               key={link.path}

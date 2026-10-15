@@ -73,6 +73,16 @@
 - **C. Smart Unit Recommendation:** Algorithmic ranking of rescue teams by capability and proximity.
 - **D. 1-Click Role Switcher:** Instant persona evaluation for hackathon juries (Citizen, Commander, Rescue Unit, Hospital Chief).
 
+### 10. 🌤️ Open-Meteo Weather & Disaster Intelligence (New)
+- **Zero-Key Meteorological Synchronization:** Real-time temperature, wind vectors, wind gusts, humidity, pressure, and precipitation via the free, open-source [Open-Meteo API](https://open-meteo.com/).
+- **Tactical Disaster Threat Evaluation:**
+  - 🔥 **Wildfire Spread Hazard:** Monitors high winds & heat indexing to alert dispatchers of accelerating fire lines.
+  - 🌊 **Flash Flood Surge Risk:** Real-time precipitation rate monitoring against urban drainage thresholds.
+  - 🚁 **Aerial Drone & Helicopter Rescue Status:** Evaluates wind shear and cloud ceiling for air ambulance / drone reconnaissance feasibility.
+- **Live GIS Map Radar Overlay:** Micro-climate weather badges on every emergency marker popup with an interactive floating meteorological HUD.
+- **Global Open-Meteo Geocoding Search:** Search and inspect real-time weather across any city or coordinates worldwide.
+- **Incident Reporting Weather Telemetry:** Automatically fetches micro-climate conditions when coordinates or GPS are detected during SOS beacon generation.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -81,6 +91,7 @@
 |---|---|
 | **Frontend** | React 18, Vite 5, Tailwind CSS, Framer Motion, Lucide React, Recharts, Leaflet |
 | **Backend** | Python 3.13, FastAPI, Uvicorn, WebSockets, Pydantic, HTTPX |
+| **Meteorology & GIS** | Open-Meteo Weather Forecast API, Open-Meteo Geocoding API, CartoDB |
 | **AI Integration** | Google Gemini 1.5 Flash API + Algorithmic Triage Engine |
 | **Database & Auth** | Firebase Firestore / Auth + Resilient In-Memory & Local Demo Adapter |
 | **Deployment** | Vercel (`vercel.json`) & Render (`render.yaml`, `Procfile`) |

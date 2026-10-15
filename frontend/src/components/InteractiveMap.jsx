@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
-import { MapPin, Navigation, Compass, Layers, Hospital as HospIcon, ShieldAlert, ExternalLink, RefreshCw } from 'lucide-react';
+import { useEmergency } from '../context/EmergencyContext';
+import {
+  MapPin, Navigation, Compass, Layers, Hospital as HospIcon,
+  ShieldAlert, ExternalLink, RefreshCw, CloudSun, Wind, Droplets,
+  AlertTriangle, Flame, Waves, Eye
+} from 'lucide-react';
 
 export const InteractiveMap = ({
   emergencies = [],
@@ -20,7 +25,29 @@ export const InteractiveMap = ({
   const markersLayerRef = useRef(null);
   const hospitalsLayerRef = useRef(null);
   const [showHospitals, setShowHospitals] = useState(true);
+  const [showWeatherOverlay, setShowWeatherOverlay] = useState(true);
   const [mapReady, setMapReady] = useState(false);
+
+  const {
+    weatherData,
+    openWeatherModal,
+    refreshWeather,
+    weatherLocationName
+  } = useEmergency();
+
+  const current = weatherData?.current || {};
+  const interp = weatherData?.interpretation || { description: 'Clear', icon: '☀️' };
+  const risk = weatherData?.disasterAssessment || { threatLevel: 'Low', threatScore: 15 };
+
+  // Expose helper to window for Leaflet popup click handlers
+  useEffect(() => {
+    window.crisisMeshOpenWeather = (lat, lon, title) => {
+      openWeatherModal(lat, lon, title);
+    };
+    return () => {
+      delete window.crisisMeshOpenWeather;
+    };
+  }, [openWeatherModal]);
 
   // Initialize Map
   useEffect(() => {
@@ -35,7 +62,7 @@ export const InteractiveMap = ({
 
     // Dark futuristic CartoDB tile layer
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> | CrisisMesh AI',
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> | CrisisMesh AI & Open-Meteo',
       maxZoom: 19,
       subdomains: 'abcd',
     }).addTo(map);
@@ -68,17 +95,13 @@ export const InteractiveMap = ({
 
       const score = inc.priorityScore || 50;
       let markerColor = '#10B981'; // green
-      let glowClass = 'pulse-low';
 
       if (inc.severity === 'Critical' || score >= 76) {
         markerColor = '#EF4444';
-        glowClass = 'pulse-crit';
       } else if (inc.severity === 'High' || (score >= 51 && score <= 75)) {
         markerColor = '#F97316';
-        glowClass = 'pulse-high';
       } else if (inc.severity === 'Moderate' || (score >= 26 && score <= 50)) {
         markerColor = '#EAB308';
-        glowClass = 'pulse-mod';
       }
 
       const iconHtml = `
@@ -100,9 +123,11 @@ export const InteractiveMap = ({
 
       const marker = L.marker([lat, lon], { icon: customIcon });
 
-      // Build popup content
+      const safeAddress = (inc.location?.address || 'Disaster Zone').replace(/'/g, "\\'");
+
+      // Build popup content with Open-Meteo live micro-climate preview
       const popupContent = document.createElement('div');
-      popupContent.style.minWidth = '240px';
+      popupContent.style.minWidth = '260px';
       popupContent.innerHTML = `
         <div style="font-family: system-ui, sans-serif; padding: 4px;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1E2D4F; padding-bottom: 6px; margin-bottom: 8px;">
@@ -117,10 +142,24 @@ export const InteractiveMap = ({
           <div style="font-size: 11px; color: #CBD5E1; margin-bottom: 4px;">
             🔄 <strong>Status:</strong> ${inc.status}
           </div>
-          ${inc.assignedTeamName ? `<div style="font-size: 11px; color: #38BDF8; margin-bottom: 8px;">🚑 <strong>Team:</strong> ${inc.assignedTeamName}</div>` : ''}
-          <div style="display: flex; gap: 6px; margin-top: 10px;">
-            <a href="/track-emergency?id=${inc.incidentId}" style="flex: 1; text-align: center; background: #EF4444; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-decoration: none;">Track SOS</a>
-            <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="background: #1E293B; color: #00E5FF; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-decoration: none; border: 1px solid #334155;">Google Maps</a>
+          ${inc.assignedTeamName ? `<div style="font-size: 11px; color: #38BDF8; margin-bottom: 6px;">🚑 <strong>Team:</strong> ${inc.assignedTeamName}</div>` : ''}
+
+          <!-- Open-Meteo Meteorological Micro-Climate Ribbon -->
+          <div style="margin: 8px 0; padding: 6px 8px; border-radius: 8px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56, 189, 248, 0.3); font-size: 11px; color: #94A3B8;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;">
+              <span style="color: #38BDF8; font-weight: bold; font-size: 10px; font-family: monospace;">OPEN-METEO METRICS</span>
+              <span style="color: #E2E8F0; font-weight: bold;">${current.temperature_2m !== undefined ? Math.round(current.temperature_2m) + '°C' : '31°C'} ${interp.icon}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #CBD5E1;">
+              <span>💨 Wind: ${current.wind_speed_10m || 8} km/h</span>
+              <span>🌧️ Precip: ${current.precipitation || 0}mm</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <a href="/track-emergency?id=${inc.incidentId}" style="flex: 1; text-align: center; background: #EF4444; color: white; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-decoration: none;">Track SOS</a>
+            <button onclick="window.crisisMeshOpenWeather(${lat}, ${lon}, '${safeAddress}')" style="cursor: pointer; background: #0F172A; color: #38BDF8; padding: 5px 8px; border-radius: 6px; font-size: 11px; border: 1px solid #38BDF8; font-weight: 600;">🌦️ Weather</button>
+            <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank" style="background: #1E293B; color: #00E5FF; padding: 5px 8px; border-radius: 6px; font-size: 11px; text-decoration: none; border: 1px solid #334155;">Maps</a>
           </div>
         </div>
       `;
@@ -137,7 +176,7 @@ export const InteractiveMap = ({
         mapInstanceRef.current.setView([lat, lon], 14, { animate: true });
       }
     });
-  }, [emergencies, selectedIncidentId, mapReady]);
+  }, [emergencies, selectedIncidentId, mapReady, current, interp]);
 
   // Update hospital markers
   useEffect(() => {
@@ -175,7 +214,7 @@ export const InteractiveMap = ({
           <div style="font-size: 11px; color: #94A3B8; margin-bottom: 4px;">📍 ${h.address}</div>
           <div style="font-size: 11px; color: #CBD5E1; margin-bottom: 4px;">🚑 Trauma: <strong>${h.traumaLevel || 'Level 1'}</strong></div>
           <div style="font-size: 11px; color: #CBD5E1; margin-bottom: 6px;">📞 Phone: <a href="tel:${h.phone}" style="color: #00E5FF;">${h.phone}</a></div>
-          <a href="https://www.google.com/maps/search/?api=1&query=${h.latitude},${h.longitude}" target="_blank" style="display: block; text-align: center; background: #0284C7; color: white; padding: 3px 6px; border-radius: 4px; font-size: 11px; text-decoration: none;">Directions in Google Maps</a>
+          <a href="https://www.google.com/maps/search/?api=1&query=${h.latitude},${h.longitude}" target="_blank" style="display: block; text-align: center; background: #0284C7; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-decoration: none;">Directions in Google Maps</a>
         </div>
       `);
       hMarker.addTo(hospitalsLayerRef.current);
@@ -235,7 +274,63 @@ export const InteractiveMap = ({
             <span>Hospitals {showHospitals ? '(Visible)' : '(Hidden)'}</span>
           </button>
         )}
+
+        {/* Weather Overlay Toggle Button */}
+        <button
+          onClick={() => setShowWeatherOverlay(!showWeatherOverlay)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur border transition-all shadow-lg ${
+            showWeatherOverlay
+              ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/70'
+              : 'bg-slate-900/90 text-slate-400 border-slate-700/80 hover:text-slate-200'
+          }`}
+          title="Toggle Open-Meteo Meteorological Radar HUD"
+        >
+          <CloudSun className="w-3.5 h-3.5" />
+          <span>Weather Layer {showWeatherOverlay ? 'ON' : 'OFF'}</span>
+        </button>
       </div>
+
+      {/* Floating Tactical Open-Meteo Meteorological HUD (Top Right) */}
+      {showWeatherOverlay && (
+        <div className="absolute top-4 right-14 z-10 hidden md:block">
+          <div
+            onClick={() => openWeatherModal()}
+            className="cursor-pointer p-3 rounded-xl bg-slate-950/90 border border-cyan-500/40 backdrop-blur-md shadow-2xl hover:border-cyan-400 transition-all group max-w-xs"
+            title="Click to launch comprehensive Open-Meteo Weather Center"
+          >
+            <div className="flex items-center justify-between gap-3 pb-1.5 border-b border-slate-800">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                <span>OPEN-METEO RADAR</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">
+                {current.temperature_2m !== undefined ? Math.round(current.temperature_2m) : '--'}°C
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-2xl group-hover:scale-110 transition-transform">
+                {interp.icon}
+              </span>
+              <div className="text-xs">
+                <p className="font-bold text-white leading-tight">{interp.description}</p>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                  <span>💨 {current.wind_speed_10m ?? 8} km/h</span>
+                  <span>•</span>
+                  <span>💧 {current.relative_humidity_2m ?? 60}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+              <span className={`font-mono font-semibold ${risk.threatLevel === 'Critical' ? 'text-red-400' : risk.threatLevel === 'High' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                Risk: {risk.threatLevel}
+              </span>
+              <span className="text-cyan-400 group-hover:underline">Detailed Radar &rarr;</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legend Overlay at Bottom Right */}
       <div className="absolute bottom-4 right-4 z-10 p-3 rounded-xl bg-navy-950/90 border border-slate-800 backdrop-blur-md text-[11px] text-slate-300 shadow-2xl space-y-1.5 hidden sm:block">
