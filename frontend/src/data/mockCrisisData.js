@@ -463,9 +463,30 @@ export const INITIAL_NOTIFICATIONS = [
 
 export const INITIAL_STATS = {
   totalIncidents: 5,
-  criticalCount: 3,
-  activeOperations: 2,
-  resolvedCount: 0,
+  activeIncidents: 5,
+  resolvedIncidents: 0,
+  criticalIncidents: 3,
+  highPriorityIncidents: 2,
+  availableRescueTeams: 3,
+  totalRescueTeams: 4,
   averageResponseTimeMinutes: 4.8,
-  activeRescueTeams: 4
+  emergencyTypeDistribution: [
+    { name: "Road Accident", count: 1 },
+    { name: "Fire Emergency", count: 1 },
+    { name: "Flood", count: 1 },
+    { name: "Medical Emergency", count: 1 },
+    { name: "Building Collapse", count: 1 }
+  ],
+  priorityDistribution: [
+    { name: "Critical", count: 3, value: 3, color: "#EF4444" },
+    { name: "High", count: 2, value: 2, color: "#F97316" }
+  ],
+  trendSeries: [
+    { time: "00:00", reports: 0, resolved: 0 },
+    { time: "04:00", reports: 0, resolved: 0 },
+    { time: "08:00", reports: 0, resolved: 0 },
+    { time: "12:00", reports: 0, resolved: 0 },
+    { time: "16:00", reports: 5, resolved: 0 },
+    { time: "20:00", reports: 0, resolved: 0 }
+  ]
 };

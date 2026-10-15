@@ -665,13 +665,17 @@ class CrisisMeshDatabase:
         high = sum(1 for e in self.emergencies.values() if e.get("severity") == "High" and e.get("status") != "Emergency Resolved")
         available_teams = sum(1 for t in self.rescue_teams.values() if t.get("availabilityStatus") == "Available")
         
-        # Distribution by type
+        # Distribution by type (sorted descending by count)
         type_counts = {}
         for e in self.emergencies.values():
             t = e.get("emergencyType", "Other")
             type_counts[t] = type_counts.get(t, 0) + 1
             
-        type_distribution = [{"name": k, "count": v} for k, v in type_counts.items()]
+        type_distribution = sorted(
+            [{"name": k, "count": v} for k, v in type_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True
+        )
         
         # Priority breakdown
         priority_counts = {"Critical": 0, "High": 0, "Moderate": 0, "Low": 0}
@@ -679,17 +683,30 @@ class CrisisMeshDatabase:
             sev = e.get("severity", "Moderate")
             if sev in priority_counts:
                 priority_counts[sev] += 1
-        priority_distribution = [{"name": k, "count": v} for k, v in priority_counts.items()]
-        
-        # Timeline trend (simulated 24-hr breakdown)
-        trend_series = [
-            {"time": "00:00", "reports": 1, "resolved": 1},
-            {"time": "04:00", "reports": 0, "resolved": 0},
-            {"time": "08:00", "reports": 3, "resolved": 2},
-            {"time": "12:00", "reports": 4, "resolved": 3},
-            {"time": "16:00", "reports": 6, "resolved": 4},
-            {"time": "20:00", "reports": total, "resolved": resolved},
+        priority_distribution = [
+            {"name": k, "count": v, "value": v}
+            for k, v in priority_counts.items()
         ]
+        
+        # Timeline trend (computed from actual incident timestamps over 24-hr slots)
+        slots = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
+        slot_data = {s: {"time": s, "reports": 0, "resolved": 0} for s in slots}
+        for e in self.emergencies.values():
+            ts_str = e.get("createdAt")
+            slot = "12:00"
+            if ts_str:
+                try:
+                    dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                    hour = dt.hour
+                    idx = min(5, max(0, hour // 4))
+                    slot = slots[idx]
+                except Exception:
+                    slot = "12:00"
+            slot_data[slot]["reports"] += 1
+            if e.get("status") == "Emergency Resolved":
+                slot_data[slot]["resolved"] += 1
+                
+        trend_series = [slot_data[s] for s in slots] if total > 0 else []
         
         return {
             "totalIncidents": total,

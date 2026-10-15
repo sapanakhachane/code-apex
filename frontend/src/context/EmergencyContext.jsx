@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   INITIAL_EMERGENCIES,
   INITIAL_RESCUE_TEAMS,
@@ -7,6 +7,7 @@ import {
   INITIAL_STATS
 } from '../data/mockCrisisData';
 import { fetchWeather } from '../services/openMeteoService';
+import { calculateDashboardAnalytics } from '../utils/dashboardAnalytics';
 
 const EmergencyContext = createContext();
 
@@ -30,7 +31,30 @@ export const EmergencyProvider = ({ children }) => {
   const [rescueTeams, setRescueTeams] = useState(INITIAL_RESCUE_TEAMS);
   const [hospitals, setHospitals] = useState(INITIAL_HOSPITALS);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
-  const [stats, setStats] = useState(INITIAL_STATS);
+  const [serverStats, setServerStats] = useState(null);
+
+  // Live real-time statistics computed directly from actual incident records
+  const stats = useMemo(() => {
+    const computed = calculateDashboardAnalytics(emergencies, rescueTeams);
+    if (serverStats && typeof serverStats === 'object') {
+      return {
+        ...computed,
+        ...serverStats,
+        // Ensure distributions always reflect actual incident records if available
+        emergencyTypeDistribution: (computed.emergencyTypeDistribution && computed.emergencyTypeDistribution.length > 0)
+          ? computed.emergencyTypeDistribution
+          : (serverStats.emergencyTypeDistribution || []),
+        priorityDistribution: (computed.priorityDistribution && computed.priorityDistribution.length > 0)
+          ? computed.priorityDistribution
+          : (serverStats.priorityDistribution || []),
+        trendSeries: (computed.trendSeries && computed.trendSeries.length > 0)
+          ? computed.trendSeries
+          : (serverStats.trendSeries || []),
+      };
+    }
+    return computed;
+  }, [emergencies, rescueTeams, serverStats]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [activeToast, setActiveToast] = useState(null);
@@ -99,7 +123,7 @@ export const EmergencyProvider = ({ children }) => {
       if (resTeams && Array.isArray(resTeams) && resTeams.length > 0) setRescueTeams(resTeams);
       if (resHosp && Array.isArray(resHosp) && resHosp.length > 0) setHospitals(resHosp);
       if (resNotif && Array.isArray(resNotif) && resNotif.length > 0) setNotifications(resNotif);
-      if (resStats && typeof resStats === 'object') setStats(resStats);
+      if (resStats && typeof resStats === 'object') setServerStats(resStats);
     } catch (err) {
       console.warn("Backend API offline, keeping rich client-side demo state:", err);
     } finally {
@@ -383,7 +407,7 @@ export const EmergencyProvider = ({ children }) => {
     setRescueTeams(INITIAL_RESCUE_TEAMS);
     setHospitals(INITIAL_HOSPITALS);
     setNotifications(INITIAL_NOTIFICATIONS);
-    setStats(INITIAL_STATS);
+    setServerStats(null);
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;

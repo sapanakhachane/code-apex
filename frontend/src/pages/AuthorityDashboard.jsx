@@ -6,15 +6,16 @@ import { StatusBadge } from '../components/StatusBadge';
 import { AISeverityCard } from '../components/AISeverityCard';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+  PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend
 } from 'recharts';
+import { CHART_PALETTE, SEVERITY_COLORS } from '../utils/dashboardAnalytics';
 import {
   ShieldAlert, Activity, Users, Flame, CheckCircle, AlertTriangle,
   Search, Filter, ExternalLink, RefreshCw, X, Shield, ArrowUpRight,
   Sliders, UserCheck, Check, Radio, Award
 } from 'lucide-react';
 
-const COLORS = ['#EF4444', '#F97316', '#EAB308', '#10B981', '#06B6D4', '#8B5CF6'];
+const COLORS = CHART_PALETTE;
 
 export const AuthorityDashboard = () => {
   const {
@@ -166,13 +167,13 @@ export const AuthorityDashboard = () => {
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
           <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Active Incidents</span>
           <span className="text-2xl font-black font-mono text-amber-400 mt-1 block">
-            {stats?.activeIncidents ?? 4}
+            {stats?.activeIncidents ?? 0}
           </span>
         </div>
         <div className="p-4 rounded-xl bg-red-950/20 border border-red-500/30">
           <span className="text-[11px] text-red-300 uppercase tracking-wider block">Critical Emergencies</span>
           <span className="text-2xl font-black font-mono text-red-400 mt-1 block">
-            {stats?.criticalIncidents ?? 2}
+            {stats?.criticalIncidents ?? 0}
           </span>
         </div>
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
@@ -190,7 +191,7 @@ export const AuthorityDashboard = () => {
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
           <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Resolved Cases</span>
           <span className="text-2xl font-black font-mono text-emerald-400 mt-1 block">
-            {stats?.resolvedIncidents ?? 1}
+            {stats?.resolvedIncidents ?? 0}
           </span>
         </div>
       </div>
@@ -245,73 +246,206 @@ export const AuthorityDashboard = () => {
         <div className="lg:col-span-6 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl">
           <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center justify-between">
             <span>Emergency Type Distribution</span>
-            <span className="text-[10px] text-slate-500 font-mono">Live Ingestion</span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {stats?.emergencyTypeDistribution?.length ? `${stats.emergencyTypeDistribution.length} Categories` : 'Live Ingestion'}
+            </span>
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.emergencyTypeDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
-                <XAxis dataKey="name" stroke="#64748B" fontSize={10} angle={-25} textAnchor="end" />
-                <YAxis stroke="#64748B" fontSize={11} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0E172A', borderColor: '#1E2D4F', borderRadius: '8px', fontSize: '12px' }}
-                />
-                <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]}>
-                  {(stats?.emergencyTypeDistribution || []).map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {Array.isArray(stats?.emergencyTypeDistribution) &&
+            stats.emergencyTypeDistribution.length > 0 &&
+            stats.emergencyTypeDistribution.some((d) => d.count > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={stats.emergencyTypeDistribution}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 25 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#64748B"
+                    fontSize={10}
+                    angle={-20}
+                    textAnchor="end"
+                    interval={0}
+                  />
+                  <YAxis stroke="#64748B" fontSize={11} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0E172A',
+                      borderColor: '#1E2D4F',
+                      borderRadius: '8px',
+                      color: '#F8FAFC',
+                      fontSize: '12px'
+                    }}
+                    formatter={(val) => [`${val} Incident${val === 1 ? '' : 's'}`, 'Report Volume']}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {stats.emergencyTypeDistribution.map((entry, i) => (
+                      <Cell key={`type-${i}`} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40">
+                <div className="w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 mb-2.5">
+                  <AlertTriangle className="w-4 h-4 text-slate-500" />
+                </div>
+                <p className="text-xs font-semibold text-slate-300">No incidents recorded</p>
+                <p className="text-[11px] text-slate-500 mt-1 max-w-[220px] leading-relaxed">
+                  Emergency type breakdown will appear when incident reports are ingested.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Priority Severity Breakdown PieChart */}
-        <div className="lg:col-span-3 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">
+        {/* Priority Severity Breakdown Doughnut Chart */}
+        <div className="lg:col-span-3 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl flex flex-col justify-between">
+          <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
             Severity Proportions
           </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats?.priorityDistribution || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={5}
-                  dataKey="count"
-                >
-                  <Cell fill="#EF4444" />
-                  <Cell fill="#F97316" />
-                  <Cell fill="#EAB308" />
-                  <Cell fill="#10B981" />
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0E172A', borderColor: '#1E2D4F', borderRadius: '8px', fontSize: '11px' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="h-52">
+            {Array.isArray(stats?.priorityDistribution) &&
+            stats.priorityDistribution.length > 0 &&
+            stats.priorityDistribution.some((d) => (d.count || d.value) > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.priorityDistribution.filter((p) => (p.count || p.value) > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={46}
+                    outerRadius={70}
+                    paddingAngle={4}
+                    dataKey="count"
+                    nameKey="name"
+                  >
+                    {stats.priorityDistribution
+                      .filter((p) => (p.count || p.value) > 0)
+                      .map((entry, i) => (
+                        <Cell
+                          key={`sev-${i}`}
+                          fill={entry.color || SEVERITY_COLORS[entry.name] || COLORS[i % COLORS.length]}
+                          stroke="#0E172A"
+                          strokeWidth={2}
+                        />
+                      ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0E172A',
+                      borderColor: '#1E2D4F',
+                      borderRadius: '8px',
+                      color: '#F8FAFC',
+                      fontSize: '11px'
+                    }}
+                    formatter={(val, name) => [`${val} Case${val === 1 ? '' : 's'}`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40">
+                <div className="w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 mb-2.5">
+                  <AlertTriangle className="w-4 h-4 text-slate-500" />
+                </div>
+                <p className="text-xs font-semibold text-slate-300">No incidents recorded</p>
+                <p className="text-[11px] text-slate-500 mt-1 max-w-[190px] leading-relaxed">
+                  Severity proportions will calculate automatically once cases are logged.
+                </p>
+              </div>
+            )}
           </div>
+          {/* Priority Legend Pill Badges */}
+          {Array.isArray(stats?.priorityDistribution) &&
+            stats.priorityDistribution.some((d) => (d.count || d.value) > 0) && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-800/80">
+                {stats.priorityDistribution
+                  .filter((p) => (p.count || p.value) > 0)
+                  .map((entry) => {
+                    const color = entry.color || SEVERITY_COLORS[entry.name] || '#64748B';
+                    return (
+                      <span
+                        key={entry.name}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold"
+                        style={{
+                          color,
+                          backgroundColor: `${color}18`,
+                          border: `1px solid ${color}40`
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                        {entry.name}: {entry.count}
+                      </span>
+                    );
+                  })}
+              </div>
+            )}
         </div>
 
-        {/* 24-Hour Ingestion Trend */}
+        {/* 24-Hour Case Inflow Line Chart */}
         <div className="lg:col-span-3 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4">
-            24-Hr Case Inflow
+          <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center justify-between">
+            <span>24-Hour Case Inflow</span>
+            <span className="text-[10px] text-slate-500 font-mono">Telemetry</span>
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats?.trendSeries || []} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="time" stroke="#64748B" fontSize={10} />
-                <YAxis stroke="#64748B" fontSize={10} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0E172A', borderColor: '#1E2D4F', borderRadius: '8px', fontSize: '11px' }}
-                />
-                <Area type="monotone" dataKey="reports" stroke="#EF4444" fill="rgba(239,68,68,0.2)" />
-                <Area type="monotone" dataKey="resolved" stroke="#10B981" fill="rgba(16,185,129,0.2)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {Array.isArray(stats?.trendSeries) &&
+            stats.trendSeries.length > 0 &&
+            stats.trendSeries.some((d) => d.reports > 0 || d.resolved > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={stats.trendSeries}
+                  margin={{ top: 10, right: 15, left: -25, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
+                  <XAxis dataKey="time" stroke="#64748B" fontSize={10} />
+                  <YAxis stroke="#64748B" fontSize={10} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0E172A',
+                      borderColor: '#1E2D4F',
+                      borderRadius: '8px',
+                      color: '#F8FAFC',
+                      fontSize: '11px'
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    wrapperStyle={{ fontSize: '10px', paddingBottom: '4px' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="reports"
+                    name="Incoming SOS"
+                    stroke="#EF4444"
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#EF4444' }}
+                    activeDot={{ r: 5 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="resolved"
+                    name="Resolved"
+                    stroke="#10B981"
+                    strokeWidth={2.5}
+                    dot={{ r: 3, fill: '#10B981' }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40">
+                <div className="w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-500 mb-2.5">
+                  <AlertTriangle className="w-4 h-4 text-slate-500" />
+                </div>
+                <p className="text-xs font-semibold text-slate-300">No incidents recorded</p>
+                <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">
+                  24-hour case inflow line chart will appear as distress calls are registered.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

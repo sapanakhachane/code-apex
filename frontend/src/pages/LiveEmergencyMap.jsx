@@ -3,6 +3,7 @@ import { useEmergency } from '../context/EmergencyContext';
 import { InteractiveMap } from '../components/InteractiveMap';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { WeatherBadge } from '../components/WeatherBadge';
 import {
   Filter, Search, RefreshCw, MapPin, Hospital, Layers,
   ShieldAlert, ChevronRight, Phone, Eye, ExternalLink,
@@ -90,6 +91,7 @@ export const LiveEmergencyMap = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <WeatherBadge className="hidden sm:flex" />
 
           <button
             onClick={handleRefresh}
@@ -187,9 +189,9 @@ export const LiveEmergencyMap = () => {
 
           <button
             onClick={() => openWeatherModal()}
-            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold text-xs transition-all flex items-center gap-1.5"
           >
-            <span>🌦️ Open Weather Radar</span>
+            <span>🌦️ Weather Center</span>
           </button>
         </div>
       </div>

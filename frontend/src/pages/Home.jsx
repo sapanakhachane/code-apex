@@ -244,7 +244,7 @@ export const Home = () => {
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
                 <span className="text-xs text-slate-400 block font-medium">Active Emergencies</span>
                 <span className="text-3xl font-black font-mono text-amber-400 mt-1 block">
-                  {stats?.activeIncidents ?? 4}
+                  {stats?.activeIncidents ?? 0}
                 </span>
                 <span className="text-[10px] text-amber-300 font-mono mt-0.5 block">Under Response</span>
               </div>
@@ -252,7 +252,7 @@ export const Home = () => {
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
                 <span className="text-xs text-slate-400 block font-medium">Resolved Emergencies</span>
                 <span className="text-3xl font-black font-mono text-emerald-400 mt-1 block">
-                  {stats?.resolvedIncidents ?? 1}
+                  {stats?.resolvedIncidents ?? 0}
                 </span>
                 <span className="text-[10px] text-emerald-300 font-mono mt-0.5 block">Completed</span>
               </div>
@@ -260,7 +260,7 @@ export const Home = () => {
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center">
                 <span className="text-xs text-slate-400 block font-medium">Available Rescue Teams</span>
                 <span className="text-3xl font-black font-mono text-cyan-400 mt-1 block">
-                  {stats?.availableRescueTeams ?? 3}
+                  {stats?.availableRescueTeams ?? 0}
                 </span>
                 <span className="text-[10px] text-cyan-300 font-mono mt-0.5 block">Ready on Standby</span>
               </div>
@@ -268,7 +268,7 @@ export const Home = () => {
               <div className="col-span-2 md:col-span-1 p-4 rounded-xl bg-red-950/20 border border-red-500/30 text-center">
                 <span className="text-xs text-red-300 block font-medium">High & Critical Incidents</span>
                 <span className="text-3xl font-black font-mono text-red-400 mt-1 block">
-                  {(stats?.criticalIncidents || 0) + (stats?.highPriorityIncidents || 0) || 3}
+                  {(stats?.criticalIncidents || 0) + (stats?.highPriorityIncidents || 0)}
                 </span>
                 <span className="text-[10px] text-red-300 font-mono mt-0.5 block">Elevated Alert</span>
               </div>

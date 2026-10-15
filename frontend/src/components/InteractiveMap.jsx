@@ -5,7 +5,9 @@ import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';
 import { useEmergency } from '../context/EmergencyContext';
 import {
-  MapPin, Navigation, Layers, Hospital as HospIcon
+  MapPin, Navigation, Compass, Layers, Hospital as HospIcon,
+  ShieldAlert, ExternalLink, RefreshCw, CloudSun, Wind, Droplets,
+  AlertTriangle, Flame, Waves, Eye
 } from 'lucide-react';
 
 export const InteractiveMap = ({
@@ -23,6 +25,7 @@ export const InteractiveMap = ({
   const markersLayerRef = useRef(null);
   const hospitalsLayerRef = useRef(null);
   const [showHospitals, setShowHospitals] = useState(true);
+  const [showWeatherOverlay, setShowWeatherOverlay] = useState(true);
   const [osmNightMode, setOsmNightMode] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
@@ -35,6 +38,7 @@ export const InteractiveMap = ({
 
   const current = weatherData?.current || {};
   const interp = weatherData?.interpretation || { description: 'Clear', icon: '☀️' };
+  const risk = weatherData?.disasterAssessment || { threatLevel: 'Low', threatScore: 15 };
 
   // Expose helper to window for Leaflet popup click handlers
   useEffect(() => {
@@ -285,7 +289,62 @@ export const InteractiveMap = ({
           </button>
         )}
 
+        {/* Weather Overlay Toggle Button */}
+        <button
+          onClick={() => setShowWeatherOverlay(!showWeatherOverlay)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur border transition-all shadow-lg ${
+            showWeatherOverlay
+              ? 'bg-cyan-950/80 text-cyan-300 border-cyan-500/70'
+              : 'bg-slate-900/90 text-slate-400 border-slate-700/80 hover:text-slate-200'
+          }`}
+          title="Toggle Open-Meteo Meteorological Radar HUD"
+        >
+          <CloudSun className="w-3.5 h-3.5" />
+          <span>Weather Layer {showWeatherOverlay ? 'ON' : 'OFF'}</span>
+        </button>
       </div>
+
+      {/* Floating Tactical Open-Meteo Meteorological HUD (Top Right) */}
+      {showWeatherOverlay && (
+        <div className="absolute top-4 right-14 z-10 hidden md:block">
+          <div
+            onClick={() => openWeatherModal()}
+            className="cursor-pointer p-3 rounded-xl bg-slate-950/90 border border-cyan-500/40 backdrop-blur-md shadow-2xl hover:border-cyan-400 transition-all group max-w-xs"
+            title="Click to launch comprehensive Open-Meteo Weather Center"
+          >
+            <div className="flex items-center justify-between gap-3 pb-1.5 border-b border-slate-800">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-cyan-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                <span>OPEN-METEO RADAR</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">
+                {current.temperature_2m !== undefined ? Math.round(current.temperature_2m) : '--'}°C
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-2xl group-hover:scale-110 transition-transform">
+                {interp.icon}
+              </span>
+              <div className="text-xs">
+                <p className="font-bold text-white leading-tight">{interp.description}</p>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                  <span>💨 {current.wind_speed_10m ?? 8} km/h</span>
+                  <span>•</span>
+                  <span>💧 {current.relative_humidity_2m ?? 60}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+              <span className={`font-mono font-semibold ${risk.threatLevel === 'Critical' ? 'text-red-400' : risk.threatLevel === 'High' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                Risk: {risk.threatLevel}
+              </span>
+              <span className="text-cyan-400 group-hover:underline">Detailed Radar &rarr;</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legend Overlay at Bottom Right */}
       <div className="absolute bottom-4 right-4 z-10 p-3 rounded-xl bg-navy-950/90 border border-slate-800 backdrop-blur-md text-[11px] text-slate-300 shadow-2xl space-y-1.5 hidden sm:block">
