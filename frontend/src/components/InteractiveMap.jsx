@@ -26,6 +26,7 @@ export const InteractiveMap = ({
   const hospitalsLayerRef = useRef(null);
   const [showHospitals, setShowHospitals] = useState(true);
   const [showWeatherOverlay, setShowWeatherOverlay] = useState(true);
+  const [osmNightMode, setOsmNightMode] = useState(false);
   const [mapReady, setMapReady] = useState(false);
 
   const {
@@ -60,11 +61,10 @@ export const InteractiveMap = ({
       zoomControl: false,
     });
 
-    // Dark futuristic CartoDB tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> | CrisisMesh AI & Open-Meteo',
+    // OpenStreetMap (OSM) tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors | CrisisMesh AI',
       maxZoom: 19,
-      subdomains: 'abcd',
     }).addTo(map);
 
     // Zoom controls at top right
@@ -246,7 +246,7 @@ export const InteractiveMap = ({
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-navy-950" style={{ height }}>
+    <div className={`relative rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-navy-950 ${osmNightMode ? 'osm-night-mode' : ''}`} style={{ height }}>
       {/* Map DOM Target */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
@@ -259,6 +259,20 @@ export const InteractiveMap = ({
         >
           <Navigation className="w-3.5 h-3.5" />
           <span>My Location</span>
+        </button>
+
+        {/* OpenStreetMap Night / Daylight View Toggle */}
+        <button
+          onClick={() => setOsmNightMode(!osmNightMode)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur border transition-all shadow-lg ${
+            osmNightMode
+              ? 'bg-purple-950/80 text-purple-300 border-purple-500/70'
+              : 'bg-emerald-950/80 text-emerald-300 border-emerald-500/70'
+          }`}
+          title="Toggle OpenStreetMap Standard / Tactical Night Mode"
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>OSM {osmNightMode ? 'Night Mode' : 'Standard'}</span>
         </button>
 
         {showHospitalsToggle && (

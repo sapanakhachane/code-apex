@@ -30,7 +30,7 @@
 - **Ethical Safeguard:** AI scores are strictly advisory. Human dispatchers retain full override authority. No distress beacon is ever rejected automatically.
 
 ### 3. 🗺️ Live Emergency Tactical Map
-- Real-time GIS map powered by CartoDB dark tiles and Leaflet.
+- Real-time GIS map powered by OpenStreetMap (OSM) tiles and Leaflet.
 - Color-coded severity markers (Critical, High, Moderate, Low).
 - Interactive popup overlays with status and responder assignments.
 - Toggleable Trauma Hospital layer with direct directions via Google Maps.
@@ -91,7 +91,7 @@
 |---|---|
 | **Frontend** | React 18, Vite 5, Tailwind CSS, Framer Motion, Lucide React, Recharts, Leaflet |
 | **Backend** | Python 3.13, FastAPI, Uvicorn, WebSockets, Pydantic, HTTPX |
-| **Meteorology & GIS** | Open-Meteo Weather Forecast API, Open-Meteo Geocoding API, CartoDB |
+| **Meteorology & GIS** | Open-Meteo Weather Forecast API, Open-Meteo Geocoding API, OpenStreetMap (OSM) |
 | **AI Integration** | Google Gemini 1.5 Flash API + Algorithmic Triage Engine |
 | **Database & Auth** | Firebase Firestore / Auth + Resilient In-Memory & Local Demo Adapter |
 | **Deployment** | Vercel (`vercel.json`) & Render (`render.yaml`, `Procfile`) |
